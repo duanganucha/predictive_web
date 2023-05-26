@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      border: 1px solid #dee2e6;
+    }
+    th,
+    td {
+      border: 1px solid #dee2e6;
+      padding: 8px;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      color: #fff;
+      background-color: #007bff;
+    }
+    th:last-child {
+      font-weight: bold;
+      color: rgb(236, 228, 223);
+    }
+    .highlight-red {
+      color: rgb(223, 93, 17);
+      font-weight: bold;
+    }
+    .highlight-blue {
+      color: rgb(29, 29, 155);
+      font-weight: bold;
+    }
+  </style>
+  <title>Table with Bootstrap</title>
+</head>
+<body>
+  <div class="container mt-4">
+    <div class="row mb-4 container">
+      <div class="col-12">
+        <label for="year-select">เลือกปี:</label>
+        <select id="year-select" class="form-control">
+          <option value="">ทั้งหมด</option>
+          <option value="2566">2566</option>
+          <option value="2567">2567</option>
+        </select>
+      </div>
+      <div class="col-12">
+        <label for="month-select">เลือกเดือน:</label>
+        <select id="month-select" class="form-control">
+          <option value="">ทั้งหมด</option>
+          <option value="1">มกราคม</option>
+          <option value="2">กุมภาพันธ์</option>
+          <option value="3">มีนาคม</option>
+          <option value="4">เมษายน</option>
+          <option value="5">พฤษภาคม</option>
+          <option value="6">มิถุนายน</option>
+          <option value="7">กรกฎาคม</option>
+          <option value="8">สิงหาคม</option>
+          <option value="9">กันยายน</option>
+          <option value="10">ตุลาคม</option>
+          <option value="11">พฤศจิกายน</option>
+          <option value="12">ธันวาคม</option>
+        </select>
+      </div>
+    </div>
+    <div class="row mb-4">
+      <div class="col text-center">
+        <button id="process-button" class="btn btn-warning">ดำเนินการ</button>
+      </div>
+    </div>
+    <div id="loading-spinner" class="text-center" style="display: none;">
+      <div class="spinner-border" role="status">
+        <span class="sr-only">Loading...</span>
+      </div>
+    </div>
+    <div class="container mt-4">
+      <div class="row mb-4">
+        <div class="col-md-6 offset-md-6">
+          <div class="form-group">
+            <label for="project-name-input">ค้นหาโครงการ:</label>
+            <input type="text" id="project-name-input" class="form-control" placeholder="ค้นหาโครงการ">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <h4>รายการโครงการ</h4>
+        </div>
+      </div>
+      <!-- ส่วนอื่น ๆ ของโค้ด -->
+    </div>
+    <table>
+      <thead class="bg-primary">
+        <tr>
+          <th>วันที่</th>
+          <th>หมายเลขโครงการ</th>
+          <th>ชื่อโครงการ</th>
+          <th>หน่วยงาน</th>
+          <th>งบปีประมาณ</th>
+          <th>สถานะเบิกจ่าย</th>
+          <th>ความเป็นไปได้ที่โครงการจะเบิกจ่ายล่าช้า</th>
+          <th>Confidence</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <!-- Table data will be dynamically added here -->
+      </tbody>
+    </table>
+  </div>
+  <script>
+    // Function to make API POST request
+    function fetchData(year, month) {
+      const url = 'https://us-central1-bot-unhbgg.cloudfunctions.net/api/egp';
+      const data = {
+        year: year,
+        month: month
+      };
+
+      const loadingSpinner = document.getElementById('loading-spinner');
+      loadingSpinner.style.display = 'block';
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(data => {
+        loadingSpinner.style.display = 'none';
+        const tableBody = document.getElementById('table-body');
+        tableBody.innerHTML = '';
+
+        data.forEach(item => {
+          const row = document.createElement('tr');
+          const issuedateCell = document.createElement('td');
+          issuedateCell.textContent = item.issuedate;
+          row.appendChild(issuedateCell);
+
+          const projectIDCell = document.createElement('td');
+          projectIDCell.textContent = item.project_id;
+          row.appendChild(projectIDCell);
+
+          const projectNameCell = document.createElement('td');
+          projectNameCell.textContent = item.project_name;
+          row.appendChild(projectNameCell);
+
+          const deptSubNameCell = document.createElement('td');
+          deptSubNameCell.textContent = item.dept_sub_name;
+          row.appendChild(deptSubNameCell);
+
+          const projectMoneyCell = document.createElement('td');
+          projectMoneyCell.textContent = item.project_money;
+          row.appendChild(projectMoneyCell);
+
+          const stepgrpidCell = document.createElement('td');
+          stepgrpidCell.textContent = item.stepgrpid;
+          row.appendChild(stepgrpidCell);
+
+          const resultPredictionCell = document.createElement('td');
+          resultPredictionCell.textContent = item.result_prediction;
+          if (item.result_prediction === 'ล่าช้า') {
+            resultPredictionCell.classList.add('highlight-red');
+          } else {
+            resultPredictionCell.classList.add('highlight-blue');
+          }
+          row.appendChild(resultPredictionCell);
+
+          const confidenceCell = document.createElement('td');
+          confidenceCell.textContent = item.confidence;
+          row.appendChild(confidenceCell);
+
+          tableBody.appendChild(row);
+        });
+      })
+      .catch(error => console.log(error));
+    }
+
+    // Add click event listener to process button
+    const processButton = document.getElementById('process-button');
+    processButton.addEventListener('click', function () {
+      const yearSelect = document.getElementById('year-select');
+      const monthSelect = document.getElementById('month-select');
+      const selectedYear = yearSelect.value;
+      const selectedMonth = monthSelect.value;
+
+      fetchData(selectedYear, selectedMonth);
+    });
+
+    // Add input event listener to project name input
+    const projectNameInput = document.getElementById('project-name-input');
+    projectNameInput.addEventListener('input', function () {
+      const filterValue = this.value.toLowerCase();
+      const rows = document.querySelectorAll('#table-body tr');
+      rows.forEach(row => {
+        const projectNameCell = row.querySelector('td:nth-child(3)');
+        if (projectNameCell.textContent.toLowerCase().includes(filterValue)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
